@@ -34,7 +34,8 @@ token.size: Defines the maximum number of tokens in the bucket. Default is 5.
 token.refill: Defines the rate at which tokens are added to the bucket per second. Default is 10.
 
 5. **Usage**
-   Rate Limiting
+   
+Rate Limiting
 
 The rate limiter is applied to all incoming HTTP requests. The LimitRateFilter checks if a client has enough 
 tokens in their bucket before allowing the request to proceed.
