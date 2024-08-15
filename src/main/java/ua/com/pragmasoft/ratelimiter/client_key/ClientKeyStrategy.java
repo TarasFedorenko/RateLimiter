@@ -1,4 +1,4 @@
-package ua.com.pragmasoft.ratelimiter;
+package ua.com.pragmasoft.ratelimiter.client_key;
 
 import jakarta.servlet.http.HttpServletRequest;
 

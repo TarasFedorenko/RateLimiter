@@ -1,9 +1,12 @@
-package ua.com.pragmasoft.ratelimiter;
+package ua.com.pragmasoft.ratelimiter.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import ua.com.pragmasoft.ratelimiter.LimitRateFilter;
+import ua.com.pragmasoft.ratelimiter.client_key.ClientKeyStrategy;
+import ua.com.pragmasoft.ratelimiter.client_key.IPClientKeyStrategy;
 
 /**
  * Configuration class for setting up the rate limiter filter and client key strategy bean.

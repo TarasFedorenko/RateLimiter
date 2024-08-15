@@ -3,6 +3,7 @@ package ua.com.pragmasoft.ratelimiter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import ua.com.pragmasoft.ratelimiter.client_key.IPClientKeyStrategy;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

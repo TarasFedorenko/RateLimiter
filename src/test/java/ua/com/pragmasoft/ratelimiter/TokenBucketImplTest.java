@@ -1,6 +1,8 @@
 package ua.com.pragmasoft.ratelimiter;
 
 import org.junit.jupiter.api.Test;
+import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucket;
+import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucketImpl;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

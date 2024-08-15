@@ -1,4 +1,4 @@
-package ua.com.pragmasoft.ratelimiter;
+package ua.com.pragmasoft.ratelimiter.token_bucket;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -13,12 +13,12 @@ public class TokenBucketImpl implements TokenBucket {
     private final AtomicLong tokens;
     private final AtomicLong lastRefillTimestamp;
 
-    static final ConcurrentMap<String, TokenBucket> buckets = new ConcurrentHashMap<>();
+    public static final ConcurrentMap<String, TokenBucket> buckets = new ConcurrentHashMap<>();
 
     /**
      * Constructs a {@link TokenBucketImpl} with the specified size and refill rate.
      *
-     * @param size the maximum number of tokens in the bucket
+     * @param size       the maximum number of tokens in the bucket
      * @param refillRate the rate at which tokens are added (tokens per second)
      */
     public TokenBucketImpl(long size, long refillRate) {
@@ -59,8 +59,8 @@ public class TokenBucketImpl implements TokenBucket {
     /**
      * Retrieves or creates a token bucket for the specified client key.
      *
-     * @param clientKey the unique client key
-     * @param size the maximum number of tokens in the bucket
+     * @param clientKey  the unique client key
+     * @param size       the maximum number of tokens in the bucket
      * @param refillRate the rate at which tokens are added (tokens per second)
      * @return the token bucket for the specified client key
      */

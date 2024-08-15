@@ -7,6 +7,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
+import ua.com.pragmasoft.ratelimiter.client_key.ClientKeyStrategy;
+import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucket;
+import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucketImpl;
 
 import java.io.IOException;
 
@@ -36,10 +39,10 @@ public class LimitRateFilter extends OncePerRequestFilter {
      * Filters the request by checking if the client has enough tokens in the bucket.
      * If tokens are available, the request proceeds. Otherwise, a 429 status is returned.
      *
-     * @param request the HTTP request
-     * @param response the HTTP response
+     * @param request     the HTTP request
+     * @param response    the HTTP response
      * @param filterChain the filter chain
-     * @throws IOException if an I/O error occurs
+     * @throws IOException      if an I/O error occurs
      * @throws ServletException if a servlet error occurs
      */
     @Override
