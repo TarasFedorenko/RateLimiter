@@ -18,13 +18,13 @@ public class LimitRateConfig {
      * Registers the {@link LimitRateFilter} with the filter registration bean.
      * Sets up the URL patterns to be filtered and injects the {@link IPClientKeyStrategy}.
      *
-     * @param clientKeyStrategy the strategy for extracting client keys
+     * @param limitRateFilter filter
      * @return the filter registration bean
      */
     @Bean
-    public FilterRegistrationBean<LimitRateFilter> rateLimiterFilter(@Qualifier("ipClientKeyStrategy") ClientKeyStrategy clientKeyStrategy) {
+    public FilterRegistrationBean<LimitRateFilter> rateLimiterFilter(LimitRateFilter limitRateFilter) {
         FilterRegistrationBean<LimitRateFilter> registrationBean = new FilterRegistrationBean<>();
-        registrationBean.setFilter(new LimitRateFilter(clientKeyStrategy));
+        registrationBean.setFilter(limitRateFilter);
         registrationBean.addUrlPatterns("/*");
         return registrationBean;
     }
@@ -38,5 +38,10 @@ public class LimitRateConfig {
     @Qualifier("ipClientKeyStrategy")
     public ClientKeyStrategy ipClientKeyStrategy() {
         return new IPClientKeyStrategy();
+    }
+
+    @Bean
+    public LimitRateFilter limitRateFilter(@Qualifier("ipClientKeyStrategy") ClientKeyStrategy clientKeyStrategy) {
+        return new LimitRateFilter(clientKeyStrategy);
     }
 }

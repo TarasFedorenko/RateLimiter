@@ -1,12 +1,12 @@
 package ua.com.pragmasoft.ratelimiter.client_key;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.stereotype.Component;
+
 
 /**
  * Implementation of {@link ClientKeyStrategy} that extracts the client IP address.
  */
-@Component
+
 public class IPClientKeyStrategy implements ClientKeyStrategy {
 
     /**

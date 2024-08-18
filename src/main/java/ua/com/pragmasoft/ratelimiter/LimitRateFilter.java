@@ -6,8 +6,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ua.com.pragmasoft.ratelimiter.client_key.ClientKeyStrategy;
+import ua.com.pragmasoft.ratelimiter.exception.RateLimitExceededException;
 import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucket;
 import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucketImpl;
 
@@ -16,6 +18,7 @@ import java.io.IOException;
 /**
  * Servlet filter that applies rate limiting based on the token bucket algorithm.
  */
+@Component
 public class LimitRateFilter extends OncePerRequestFilter {
 
     @Value("${token.size:5}")
@@ -37,7 +40,7 @@ public class LimitRateFilter extends OncePerRequestFilter {
 
     /**
      * Filters the request by checking if the client has enough tokens in the bucket.
-     * If tokens are available, the request proceeds. Otherwise, a 429 status is returned.
+     * If tokens are available, the request proceeds. Otherwise, a 429 status with detailed error information is returned.
      *
      * @param request     the HTTP request
      * @param response    the HTTP response
@@ -53,11 +56,13 @@ public class LimitRateFilter extends OncePerRequestFilter {
         String clientKey = clientKeyStrategy.getClientKey(request);
         TokenBucket bucket = TokenBucketImpl.getBucket(clientKey, size, refillRate);
 
-        if (bucket.getToken(1)) {
+        try {
+            bucket.getToken(1);
             filterChain.doFilter(request, response);
-        } else {
-            response.getWriter().write("Rate limit exceeded");
+        } catch (RateLimitExceededException e) {
             response.setStatus(429);
+            response.setHeader("Retry-After", String.valueOf(e.getRetryAfterMillis() / 1000));
+            response.getWriter().write("Rate limit exceeded: " + e.getErrorReason());
         }
     }
 }

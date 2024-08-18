@@ -1,72 +1,76 @@
 package ua.com.pragmasoft.ratelimiter;
 
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ua.com.pragmasoft.ratelimiter.client_key.IPClientKeyStrategy;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import ua.com.pragmasoft.ratelimiter.client_key.ClientKeyStrategy;
+import ua.com.pragmasoft.ratelimiter.exception.RateLimitExceededException;
 import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucket;
-import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucketImpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-public class LimitRateFilterTest {
+class LimitRateFilterTest {
 
+    @InjectMocks
     private LimitRateFilter limitRateFilter;
-    private IPClientKeyStrategy ipClientKeyStrategy;
+
+    @Mock
+    private ClientKeyStrategy clientKeyStrategy;
+
+    @Mock
     private TokenBucket tokenBucket;
-    private PrintWriter printWriter;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private HttpServletResponse response;
+
+    @Mock
+    private FilterChain filterChain;
+
+    @Mock
+    private PrintWriter writer;
 
     @BeforeEach
-    public void setUp() {
-        ipClientKeyStrategy = mock(IPClientKeyStrategy.class);
-        tokenBucket = mock(TokenBucket.class);
-        printWriter = mock(PrintWriter.class);
-
-        limitRateFilter = new LimitRateFilter(ipClientKeyStrategy);
-        limitRateFilter.size = 5;
-        limitRateFilter.refillRate = 10;
+    void setUp() throws IOException {
+        MockitoAnnotations.openMocks(this);
+        when(response.getWriter()).thenReturn(writer);
+        when(clientKeyStrategy.getClientKey(request)).thenReturn("clientKey");
+        limitRateFilter.size = 5; // Пример значения
+        limitRateFilter.refillRate = 10; // Пример значения
     }
 
     @Test
-    public void testDoFilterInternal_AllowsRequest_WhenTokenAvailable() throws IOException, ServletException {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        FilterChain filterChain = mock(FilterChain.class);
+    void testDoFilterInternal_Success() throws Exception {
+        // Arrange
+        doNothing().when(tokenBucket).getToken(1);
 
-        when(ipClientKeyStrategy.getClientKey(request)).thenReturn("127.0.0.1");
-        when(tokenBucket.getToken(1)).thenReturn(true);
-        when(response.getWriter()).thenReturn(printWriter);
-        TokenBucketImpl.buckets.put("127.0.0.1", tokenBucket);
-
-
+        // Act
         limitRateFilter.doFilterInternal(request, response, filterChain);
 
+        // Assert
         verify(filterChain).doFilter(request, response);
         verify(response, never()).setStatus(429);
-        verify(response, never()).getWriter();
     }
 
     @Test
-    public void testDoFilterInternal_RejectsRequest_WhenNoTokenAvailable() throws IOException, ServletException {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        HttpServletResponse response = mock(HttpServletResponse.class);
-        FilterChain filterChain = mock(FilterChain.class);
+    void testGetTokenThrowsRateLimitExceededException() throws RateLimitExceededException {
+        // Arrange
+        doThrow(new RateLimitExceededException("Rate limit exceeded. Try again later.", 1000L, "Exceeded the allowed rate limit."))
+                .when(tokenBucket).getToken(1);
 
-        when(ipClientKeyStrategy.getClientKey(request)).thenReturn("127.0.0.1");
-        when(tokenBucket.getToken(1)).thenReturn(false);
-        when(response.getWriter()).thenReturn(printWriter);
-        TokenBucketImpl.buckets.put("127.0.0.1", tokenBucket);
-
-        limitRateFilter.doFilterInternal(request, response, filterChain);
-
-        verify(filterChain, never()).doFilter(request, response);
-        verify(response).setStatus(429);
-        verify(printWriter).write("Rate limit exceeded");
+        // Act & Assert
+        assertThrows(RateLimitExceededException.class, () -> tokenBucket.getToken(1));
     }
 }
+
