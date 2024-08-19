@@ -100,7 +100,6 @@ class TokenBucketImplTest {
                 try {
                     bucket.getToken(tokensPerRequest);
                 } catch (RateLimitExceededException e) {
-                    System.out.println(exceededCount);
                     exceededCount.incrementAndGet();
                 } finally {
                     latch.countDown();
