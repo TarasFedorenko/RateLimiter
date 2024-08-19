@@ -51,6 +51,7 @@ address. This IP address is used as the client key for rate limiting.
 
 If a client exceeds their rate limit, the filter responds with HTTP status 429 Too Many Requests and a message
 with information about retry time, and error reason.
+
 6. **Proposed Solution for Horizontal Scalability**
 
 To ensure that our rate limiter can scale horizontally and work effectively in a distributed environment, I 
