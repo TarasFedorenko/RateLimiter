@@ -12,19 +12,21 @@ This application implements a rate limiter using the token bucket algorithm. It 
 4. **RateLimiterApplication**: The main Spring Boot application class.
 5. **TokenBucket**: An interface for token bucket implementations.
 6. **TokenBucketImpl**: A concrete implementation of `TokenBucket` that uses an atomic counter for tokens and refills based on elapsed time.
+7. **RateLimitExceededException**: An exception class that thrown when a rate limit is exceeded
+8. **HelloController**: A simple controller class to test the application
 
 ## Setup
 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/TarasFedorenko/RateLimiterWithoutRedis.git
+   git clone https://github.com/TarasFedorenko/RateLimiter.git
    
 2. **Build the Application**
    mvn clean install
 
 3. **Run the Application**
-   mvn spring-boot:run
+   mvnw spring-boot:run
 
 4. **Configuration**
    The application uses properties defined in application.properties. The following properties can be configured:
@@ -48,7 +50,7 @@ address. This IP address is used as the client key for rate limiting.
 *Error Handling*
 
 If a client exceeds their rate limit, the filter responds with HTTP status 429 Too Many Requests and a message
-"Rate limit exceeded".
+with information about retry time, and error reason.
 6. **Proposed Solution for Horizontal Scalability**
 
 To ensure that our rate limiter can scale horizontally and work effectively in a distributed environment, I 
@@ -69,5 +71,6 @@ propose the following solution.
 - Testing
   Integration tests will be used to ensure that the token bucket state is correctly managed across different instances
   or stateless functions. These tests will validate the consistency and correctness of the distributed storage approach.
+  Added tests for the behavior of the algorithm in a multi-threading environment.
 
 

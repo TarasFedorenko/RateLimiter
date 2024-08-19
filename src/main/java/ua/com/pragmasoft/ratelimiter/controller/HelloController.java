@@ -5,16 +5,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Простой контроллер для проверки работы приложения.
+ * A simple controller to test the application
  */
 @RestController
 @RequestMapping("/")
 public class HelloController {
 
     /**
-     * Обрабатывает GET-запросы по корневому пути и возвращает приветственное сообщение.
+     * Processes GET requests to the root path and returns a welcome message.
      *
-     * @return строку с приветствием
+     * @return string with a welcome message
      */
     @GetMapping
     public String sayHello() {

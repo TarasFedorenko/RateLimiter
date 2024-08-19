@@ -13,5 +13,5 @@ public interface TokenBucket {
      * @param tokensForBucket the number of tokens to retrieve
      * @return true if the tokens were successfully retrieved, false otherwise
      */
-   boolean getToken(int tokensForBucket) throws RateLimitExceededException;
+    boolean getToken(int tokensForBucket) throws RateLimitExceededException;
 }

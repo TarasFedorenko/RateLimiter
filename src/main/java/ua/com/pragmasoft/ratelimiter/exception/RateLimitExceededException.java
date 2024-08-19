@@ -10,9 +10,9 @@ public class RateLimitExceededException extends Exception {
     /**
      * Constructs an exception with the specified message, retry time, and error reason.
      *
-     * @param message         the detail message
+     * @param message          the detail message
      * @param retryAfterMillis time in milliseconds to wait before retrying
-     * @param errorReason     the reason for the rate limit being exceeded
+     * @param errorReason      the reason for the rate limit being exceeded
      */
     public RateLimitExceededException(String message, long retryAfterMillis, String errorReason) {
         super(message);

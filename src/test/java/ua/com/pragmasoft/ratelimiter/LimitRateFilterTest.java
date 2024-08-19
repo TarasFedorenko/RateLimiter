@@ -46,30 +46,21 @@ class LimitRateFilterTest {
         MockitoAnnotations.openMocks(this);
         when(response.getWriter()).thenReturn(writer);
         when(clientKeyStrategy.getClientKey(request)).thenReturn("clientKey");
-        limitRateFilter.size = 5; // Пример значения
-        limitRateFilter.refillRate = 10; // Пример значения
+        limitRateFilter.size = 5;
+        limitRateFilter.refillRate = 10;
     }
 
     @Test
     void testDoFilterInternal_Success() throws Exception {
-        // Arrange
-        doNothing().when(tokenBucket).getToken(1);
-
-        // Act
+        when(tokenBucket.getToken(1)).thenReturn(true);
         limitRateFilter.doFilterInternal(request, response, filterChain);
-
-        // Assert
         verify(filterChain).doFilter(request, response);
         verify(response, never()).setStatus(429);
     }
-
     @Test
     void testGetTokenThrowsRateLimitExceededException() throws RateLimitExceededException {
-        // Arrange
         doThrow(new RateLimitExceededException("Rate limit exceeded. Try again later.", 1000L, "Exceeded the allowed rate limit."))
                 .when(tokenBucket).getToken(1);
-
-        // Act & Assert
         assertThrows(RateLimitExceededException.class, () -> tokenBucket.getToken(1));
     }
 }

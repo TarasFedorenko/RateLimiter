@@ -17,7 +17,7 @@ public class TokenBucketImpl implements TokenBucket {
     private final AtomicLong lastRefillTimestamp;
 
     private static final ConcurrentMap<String, TokenBucketImpl> buckets = new ConcurrentHashMap<>();
-    private static final long CLEANUP_INTERVAL_MS = 60000; // Cleanup interval in milliseconds
+    private static final long CLEANUP_INTERVAL_MS = 60000;
 
     /**
      * Constructs a {@link TokenBucketImpl} with the specified size and refill rate.
@@ -36,6 +36,7 @@ public class TokenBucketImpl implements TokenBucket {
      * Attempts to retrieve a specified number of tokens from the bucket.
      *
      * @param tokensForBucket the number of tokens to retrieve
+     * @return true value if token retrieve successfully
      * @throws RateLimitExceededException if the tokens cannot be retrieved
      */
     @Override
@@ -59,7 +60,6 @@ public class TokenBucketImpl implements TokenBucket {
         long now = System.currentTimeMillis();
         long elapsed = now - lastRefillTimestamp.get();
         if (elapsed > CLEANUP_INTERVAL_MS) {
-            // Perform cleanup if necessary
             cleanUpBuckets();
         }
         long newTokens = elapsed * refillRate / 1000;
@@ -114,7 +114,6 @@ public class TokenBucketImpl implements TokenBucket {
      * @return true if the bucket has expired, false otherwise
      */
     private boolean isExpired(long currentTime) {
-        // Example expiration logic; customize as needed
         return currentTime - lastRefillTimestamp.get() > CLEANUP_INTERVAL_MS;
     }
 }

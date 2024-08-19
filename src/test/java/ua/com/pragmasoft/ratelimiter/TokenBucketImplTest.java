@@ -2,14 +2,15 @@ package ua.com.pragmasoft.ratelimiter;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import ua.com.pragmasoft.ratelimiter.exception.RateLimitExceededException;
-import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucket;
 import ua.com.pragmasoft.ratelimiter.token_bucket.TokenBucketImpl;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,50 +25,48 @@ class TokenBucketImplTest {
     @Test
     void testGetToken_Success() throws RateLimitExceededException {
         bucket.getToken(5);
-        // Should be able to get 5 tokens without exception
         assertDoesNotThrow(() -> bucket.getToken(3));
     }
 
     @Test
     void testGetToken_ExceedsLimit() throws RateLimitExceededException {
         bucket.getToken(10);
-        // Should throw RateLimitExceededException as we have no tokens left
         assertThrows(RateLimitExceededException.class, () -> bucket.getToken(1));
     }
 
     @Test
     void testRefillTokens() throws InterruptedException, RateLimitExceededException {
         bucket.getToken(5);
-        TimeUnit.SECONDS.sleep(1); // wait for 1 second
-        bucket.getToken(5); // should succeed as tokens should be refilled
+        TimeUnit.SECONDS.sleep(1);
+        bucket.getToken(5);
         assertDoesNotThrow(() -> bucket.getToken(1));
     }
 
     @Test
     void testCalculateRetryAfter_RefillRateZero() throws RateLimitExceededException {
-        // Устанавливаем refillRate в 0
-        TokenBucketImpl bucket = new TokenBucketImpl(10, 0); // refillRate 0
-        bucket.getToken(10); // вызовет исключение
-
+        TokenBucketImpl bucket = new TokenBucketImpl(10, 0);
+        bucket.getToken(10);
         assertThrows(IllegalStateException.class, bucket::calculateRetryAfter);
     }
 
     @Test
-    public void testTokenBucketWithConcurrentAccess() throws InterruptedException {
-        final int threadCount = 10;
-        final int tokensPerThread = 1;
-        final int bucketSize = 5;
-        final int refillRate = 10;
+    @Timeout(10)
+    void testConcurrentTokenRequests() throws InterruptedException {
+        long size = 10;
+        long refillRate = 5;
+        TokenBucketImpl bucket = new TokenBucketImpl(size, refillRate);
+        int numThreads = 10;
+        int tokensPerRequest = 1;
+        AtomicInteger successfulRequests = new AtomicInteger(0);
+        CountDownLatch latch = new CountDownLatch(numThreads);
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 
-        TokenBucket bucket = new TokenBucketImpl(bucketSize, refillRate);
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch latch = new CountDownLatch(threadCount);
-
-        for (int i = 0; i < threadCount; i++) {
+        for (int i = 0; i < numThreads; i++) {
             executor.submit(() -> {
                 try {
-                    boolean success = bucket.getToken(tokensPerThread);
-                    assertTrue(success);
+                    if (bucket.getToken(tokensPerRequest)) {
+                        successfulRequests.incrementAndGet();
+                    }
                 } catch (RateLimitExceededException e) {
                     System.out.println("This exception may not be thrown");
                 } finally {
@@ -76,43 +75,42 @@ class TokenBucketImplTest {
             });
         }
 
-        boolean latchCompleted = latch.await(10, TimeUnit.SECONDS);
-        assertTrue(latchCompleted,"Tasks did not complete in time" );
-
+        latch.await();
         executor.shutdown();
-        boolean executorTerminated = executor.awaitTermination(10, TimeUnit.SECONDS);
-        assertTrue(executorTerminated,"Executor did not terminate in time" );
+
+        assertTrue(successfulRequests.get() > 0, "Some requests should have succeeded");
     }
+
     @Test
-    public void testTokenBucketWithRateLimitExceeded() throws InterruptedException {
-        final int threadCount = 10;
-        final int tokensPerThread = 1;
-        final int bucketSize = 5;
-        final int refillRate = 10; // tokens per second
+    @Timeout(10)
+    void testRateLimitExceededExceptionInMultithreadedEnvironment() throws InterruptedException {
 
-        TokenBucket bucket = new TokenBucketImpl(bucketSize, refillRate);
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        CountDownLatch latch = new CountDownLatch(threadCount);
+        long size = 5;
+        long refillRate = 10;
+        TokenBucketImpl bucket = new TokenBucketImpl(size, refillRate);
+        int numThreads = 10;
+        int tokensPerRequest = 1;
+        AtomicInteger exceededCount = new AtomicInteger(0);
+        CountDownLatch latch = new CountDownLatch(numThreads);
+        ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 
-        for (int i = 0; i < threadCount; i++) {
+        // When
+        for (int i = 0; i < numThreads; i++) {
             executor.submit(() -> {
                 try {
-                    if (!bucket.getToken(tokensPerThread)) {
-                        throw new AssertionError("Expected RateLimitExceededException");
-                    }
+                    bucket.getToken(tokensPerRequest);
                 } catch (RateLimitExceededException e) {
-                    // Expected exception
+                    System.out.println(exceededCount);
+                    exceededCount.incrementAndGet();
                 } finally {
                     latch.countDown();
                 }
             });
         }
 
-        boolean latchCompleted = latch.await(10, TimeUnit.SECONDS);
-        assertTrue(latchCompleted,"Tasks did not complete in time" );
-
+        latch.await();
         executor.shutdown();
-        boolean executorTerminated = executor.awaitTermination(10, TimeUnit.SECONDS);
-        assertTrue(executorTerminated,"Executor did not terminate in time" );
+
+        assertTrue(exceededCount.get() > 0, "At least one request should have exceeded the rate limit");
     }
 }
